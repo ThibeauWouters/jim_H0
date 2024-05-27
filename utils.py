@@ -36,6 +36,32 @@ COLUMN_NAMES = ["simulation_id",
 
 INJECTION_OUTDIR = "/home/thibeau.wouters/projects/jim_H0/injections/"
 
+def filter_dict_by_indices(original_dict: dict, indices: list[int]) -> dict:
+    """
+    Filter the values of a dictionary by the provided indices. The keys remain the same. If a single index is passed, the values will be floats, whereas if multiple indices are passed, the values will be Numpy arrays.
+
+    Args:
+        original_dict (dict): Original dictionary
+        indices (list[int]): List of indices to filter by
+
+    Returns:
+        dict: Filtered dictionary
+    """
+    filtered_dict = {}
+    
+    # Iterate through each key-value pair in the original dictionary
+    for key, values in original_dict.items():
+        # Filter the values by the provided indices, either as float or as array
+        if len(indices) == 1:
+            filtered_values = values[indices[0]]
+        else:
+            filtered_values = np.array([values[i] for i in indices])
+        
+        # Save them
+        filtered_dict[key] = filtered_values
+    
+    return filtered_dict
+
 ####################
 ### READING DATA ###
 ####################
@@ -90,6 +116,7 @@ def read_injections_file(filename: str) -> dict:
     
     # Put it in a dictionary
     data_dict = {name: data[i] for i, name in enumerate(COLUMN_NAMES)}
+    data_dict["simulation_id"] = data_dict["simulation_id"].astype(int)
     
     # Also add the redshift
     z = z_at_value(cosmo.luminosity_distance, data_dict["distance"] * u.Mpc).to_value(
@@ -108,14 +135,27 @@ def read_injections_file(filename: str) -> dict:
     
     return data_dict
 
+#################
+### INJECTION ###
+#################
+
 def generate_config(params_dict: dict, 
-                    N_config: int = 1,
                     outdir: str = "./outdir/",
-                    ifos: list[str] = ["H1", "L1"]
-                    ) -> str:
+                    ) -> dict:
     """
-    TODO: write documentation once is finished
+    Generate a configuration file for the given parameters. This file can be used to inject a signal into the data.
+
+    Args:
+        params_dict (dict): Dictionary with the parameters of the injection
+        outdir (str, optional): Where to save the results. Defaults to "./outdir/".
+
+    Returns:
+        dict: The generated configuration file as a dictionary
     """
+    
+    # Get the simulation id and use it to get the full directory path
+    N = params_dict["simulation_id"]
+    output_path = f"{outdir}injection_{str(N)}/"
     
     # Get the parameters of this injection
     m1, m2 = params_dict["source_mass1"], params_dict["source_mass2"]
@@ -133,10 +173,9 @@ def generate_config(params_dict: dict,
     cos_iota = np.cos(params_dict["inclination"])
     psi = params_dict["polarization"]
     ra = params_dict["longitude"] # TODO: check if this is OK?
-    sin_dec = np.sin(params_dict["latitude"])
+    sin_dec = np.sin(params_dict["latitude"]) # TODO: check if this is OK?
         
     # Create new injection file
-    output_path = f'{outdir}injection_{str(N_config)}/'
     if not os.path.exists(output_path):
         os.makedirs(output_path)
         print("Made injection directory: ", output_path)
@@ -148,13 +187,19 @@ def generate_config(params_dict: dict,
     else:
         print("Injection directory exists: ", output_path)
 
+    # Note: ifos might be a string, can easily get it as a list instead
+    ifos = params_dict["ifos"]
+    if isinstance(params_dict["ifos"], str):
+        ifos = params_dict["ifos"].split(",")
+
     # Create the injection dictionary
     seed = np.random.randint(low=0, high=10000)
     injection_dict = {
         # Random stuff
         'seed': seed,
         'ifos': ifos,
-        'outdir' : output_path, 
+        'outdir' : output_path,
+        'snr' : params_dict["snr"], # note: as computed by Weizmann, can be checked with my own code for sanity checking
         
         # Frequency and duration
         'f_sampling': 2 * 2048,
@@ -165,7 +210,7 @@ def generate_config(params_dict: dict,
         'post_trigger_duration': 2,
         
         # Parameters of the injection
-        'M_c': mc,
+        'M_c': float(mc),
         'q': q,
         's1_z': s1_z,
         's2_z': s2_z,

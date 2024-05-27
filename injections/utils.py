@@ -351,7 +351,7 @@ def plot_chains(chains, name, outdir, truths = None, labels = labels):
     
     # Check if 3D, then reshape
     if len(np.shape(chains)) == 3:
-        chains = chains.reshape(-1, 13)
+        chains = chains.reshape(-1, len(NAMING))
     
     # Find index of cos iota and sin dec
     cos_iota_index = labels.index(r'$\iota$')
@@ -374,7 +374,7 @@ def plot_chains_from_file(outdir, load_true_params: bool = False):
         values = chains[:, :, i].flatten()
         my_chains.append(values)
     my_chains = np.array(my_chains).T
-    chains = chains.reshape(-1, 13)
+    chains = chains.reshape(-1, len(NAMING))
     if load_true_params:
         truths = load_true_params_from_config(outdir)
     else:
@@ -505,22 +505,10 @@ def get_parser(**kwargs):
         help="Output directory for the injection.",
     )
     parser.add_argument(
-        "--load-existing-config",
-        type=bool,
-        default=False,
-        help="Whether to load and redo an existing injection (True) or to generate a new set of parameters (False).",
-    )
-    parser.add_argument(
         "--N",
         type=str,
-        default="",
-        help="Number (or generically, a custom identifier) of this injection, used to locate the output directory. If an empty string is passed (default), we generate a new injection.",
-    )
-    parser.add_argument(
-        "--SNR-threshold",
-        type=float,
-        default=12,
-        help="Skip injections with SNR below this threshold.",
+        default="1",
+        help="Number (or generically, a custom identifier) of this injection.",
     )
     parser.add_argument(
         "--waveform-approximant",
@@ -579,51 +567,26 @@ def get_parser(**kwargs):
     parser.add_argument(
         "--n-loop-training",
         type=int,
-        default=400,
+        default=20,
         help="Number of training loops"
     )
     parser.add_argument(
         "--n-loop-production",
         type=int,
-        default=50,
+        default=20,
         help="Number of production loops"
     )
-    # TODO deprecated, move
-    # parser.add_argument(
-    #     "--n-local-steps",
-    #     type=int,
-    #     default=5,
-    #     help="Number of local steps, used for both training and production"
-    # )
-    # parser.add_argument(
-    #     "--n-global-steps",
-    #     type=int,
-    #     default=400,
-    #     help="Number of global steps, used for both training and production"
-    # )
     parser.add_argument(
-        "--n-local-steps-training",
+        "--n-local-steps",
         type=int,
-        default=5,
-        help="Number of local steps used in training"
+        default=100,
+        help="Number of local steps, used for both training and production"
     )
     parser.add_argument(
-        "--n-global-steps-training",
+        "--n-global-steps",
         type=int,
-        default=400,
-        help="Number of global steps used in training"
-    )
-    parser.add_argument(
-        "--n-local-steps-production",
-        type=int,
-        default=5,
-        help="Number of local steps used in training"
-    )
-    parser.add_argument(
-        "--n-global-steps-production",
-        type=int,
-        default=400,
-        help="Number of global steps used in training"
+        default=1000,
+        help="Number of global steps, used for both training and production"
     )
     parser.add_argument(
         "--n-epochs",
@@ -734,52 +697,36 @@ def get_parser(**kwargs):
         default=8,
         help="Number of bins"
     )
-    parser.add_argument(
-        "--which-local-sampler",
-        type=str,
-        default="MALA",
-        help="Which local sampler to use"
-    )
+    # parser.add_argument(
+    #     "--which-local-sampler",
+    #     type=str,
+    #     default="MALA",
+    #     help="Which local sampler to use"
+    # )
     parser.add_argument(
         "--no-noise",
         type=bool,
         default=False,
         help="Whether to do no noise injection"
     )
-    parser.add_argument(
-        "--which-distance-prior",
-        type=str,
-        default="uniform",
-        help="Which prior to use for distance"
-    )
+    # parser.add_argument(
+    #     "--which-distance-prior",
+    #     type=str,
+    #     default="uniform",
+    #     help="Which prior to use for distance"
+    # )
     parser.add_argument(
         "--chirp-mass-prior",
         type=str,
-        default="regular",
+        default="tight",
         help="Which chirp mass prior to use. For now, only tight changes the prior, to be +- 0.01 around the injected value."
     )
-    
-    
-    # # TODO this has to be implemented
-    # parser.add_argument(
-    #     "--autotune_local_sampler",
-    #     type=bool,
-    #     default=False,
-    #     help="TODO Still has to be implemented! Specify whether to use autotuning for the local sampler.",
-    # )
-    # TODO os does not use them?
-    # parser.add_argument(
-    #     "--GPU-device",
-    #     type=int,
-    #     default=0,
-    #     help="Select GPU index to use.",
-    # )
-    # parser.add_argument(
-    #     "--GPU-memory-fraction",
-    #     type=float,
-    #     default=0.5,
-    #     help="Select percentage of GPU memory to use.",
-    # )
+    parser.add_argument(
+        "--psd-file",
+        type=str,
+        default="./psds/design_psd.txt",
+        help="Which PSD file to use. Default is the design sensitivity curve."
+    )
     return parser
 
 
