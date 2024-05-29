@@ -12,7 +12,10 @@ from jaxtyping import Array, Float
 
 # from injection_recovery import NAMING
 
-NAMING = ['M_c', 'q', 's1_z', 's2_z', 'lambda_1', 'lambda_2', 'd_L', 't_c', 'phase_c', 'cos_iota', 'psi', 'ra', 'sin_dec']
+# TODO: fix to get the lambdas?
+# NAMING = ['M_c', 'q', 's1_z', 's2_z', 'lambda_1', 'lambda_2', 'd_L', 't_c', 'phase_c', 'cos_iota', 'psi', 'ra', 'sin_dec']
+NAMING = ['M_c', 'q', 's1_z', 's2_z', 'd_L', 't_c', 'phase_c', 'cos_iota', 'psi', 'ra', 'sin_dec']
+
 
 default_corner_kwargs = dict(bins=40, 
                         smooth=1., 
