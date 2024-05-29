@@ -3,3 +3,4 @@ jim/
 ripple/
 .ipynb-checkpoints/
 test/
+*.npz
