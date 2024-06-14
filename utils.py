@@ -62,6 +62,48 @@ def filter_dict_by_indices(original_dict: dict, indices: list[int]) -> dict:
     
     return filtered_dict
 
+def filter_dict_by_simulation_indices(original_dict: dict, indices: list[int]) -> dict:
+    """
+    Filter the values of a dictionary by the provided indices. The keys remain the same. If a single index is passed, the values will be floats, whereas if multiple indices are passed, the values will be Numpy arrays.
+
+    Args:
+        original_dict (dict): Original dictionary
+        indices (list[int]): List of indices to filter by
+
+    Returns:
+        dict: Filtered dictionary
+    """
+    filtered_dict = {}
+    
+    # Find where the simulation IDs are in the original dictionary
+    sim_ids = original_dict["simulation_id"]
+    location_idx = np.where(np.isin(indices, sim_ids))[0]
+    
+    # Iterate through each key-value pair in the original dictionary
+    for key, values in original_dict.items():
+        # Save them
+        filtered_dict[key] = values[location_idx]
+    
+    return filtered_dict
+
+def split_dict(large_dict: dict) -> list[dict]:
+    
+    length = len(large_dict["simulation_id"])
+    keys = list(large_dict.keys())
+    
+    result = []
+    
+    for i in range(length):
+        new_dict = {}
+        for key, values_list in large_dict.items():
+            new_dict[key] = values_list[i]
+            
+        result.append(new_dict)
+        del new_dict
+        
+    return result
+            
+
 ####################
 ### READING DATA ###
 ####################

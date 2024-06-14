@@ -5,10 +5,9 @@ import psutil
 p = psutil.Process()
 p.cpu_affinity([0])
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = "2"
+os.environ['CUDA_VISIBLE_DEVICES'] = "3"
 os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = "0.10"
 import numpy as np
-import argparse
 # Regular imports 
 import argparse
 import copy
@@ -23,8 +22,8 @@ import jax.numpy as jnp
 from jimgw.jim import Jim
 from jimgw.single_event.detector import H1, L1
 from jimgw.single_event.likelihood import HeterodynedTransientLikelihoodFD, TransientLikelihoodFD
-from jimgw.single_event.waveform import RippleIMRPhenomD, RippleIMRPhenomD_NRTidalv2
-from jimgw.prior import Uniform, Composite
+from jimgw.single_event.waveform import RippleIMRPhenomD_NRTidalv2
+from jimgw.prior import Uniform, Composite, PowerLaw
 import utils # our plotting and postprocessing utilities script
 
 from ripple import Mc_eta_to_ms
@@ -34,7 +33,7 @@ import optax
 # Names of the parameters and their ranges for sampling parameters for the injection
 NAMING = ['M_c', 'q', 's1_z', 's2_z', 'lambda_1', 'lambda_2', 'd_L', 't_c', 'phase_c', 'cos_iota', 'psi', 'ra', 'sin_dec']
 PRIOR = {
-        "M_c": [1.00662100315094, 2.44429349899292], # but we are going to override this with a more focused prior?
+        "M_c": [1.00662100315094, 2.44429349899292], # but we are going to override this with a more focused prior!
         "q": [0.125, 1.0], 
         "s1_z": [-0.05, 0.05], 
         "s2_z": [-0.05, 0.05], 
@@ -126,7 +125,6 @@ def body(args):
     ripple_waveform_fn = RippleIMRPhenomD_NRTidalv2
     reference_waveform = RippleIMRPhenomD_NRTidalv2(f_ref=20.0, no_taper = True)
 
-    # Before main code, check if outdir is correct dir format TODO improve with sys?
     if args.outdir[-1] != "/":
         args.outdir += "/"
 
@@ -233,7 +231,6 @@ def body(args):
             h_sky,
             detector_param,
             psd_file=args.psd_file,
-            square_psd = True
         )
         network_snr += utils.compute_snr(ifo, h_sky, detector_param) ** 2
     print("Signal injected")
@@ -268,7 +265,8 @@ def body(args):
     s2z_prior      = Uniform(prior_low[3], prior_high[3], naming=['s2_z'])
     lambda_1_prior = Uniform(prior_low[4], prior_high[4], naming=['lambda_1'])
     lambda_2_prior = Uniform(prior_low[5], prior_high[5], naming=['lambda_2'])
-    dL_prior       = Uniform(prior_low[6], prior_high[6], naming=['d_L'])
+    # dL_prior       = Uniform(prior_low[6], prior_high[6], naming=['d_L'])
+    dL_prior       = PowerLaw(prior_low[6], prior_high[6], alpha = 2.0, naming=['d_L'])
     tc_prior       = Uniform(prior_low[7], prior_high[7], naming=['t_c'])
     phic_prior     = Uniform(prior_low[8], prior_high[8], naming=['phase_c'])
     cos_iota_prior = Uniform(prior_low[9], prior_high[9], naming=["cos_iota"],
@@ -412,9 +410,6 @@ def body(args):
     
     # Finally, copy over this script to the outdir for reproducibility
     shutil.copy2(__file__, outdir + "copy_injection_recovery.py")
-    
-    print("Saving the jim hyperparameters")
-    jim.save_hyperparameters(outdir = outdir)
     
     end_time = time.time()
     runtime = end_time - start_time

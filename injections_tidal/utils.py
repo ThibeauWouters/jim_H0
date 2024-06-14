@@ -112,66 +112,6 @@ def generate_params_dict(prior_low: jnp.array, prior_high: jnp.array, params_nam
         params_dict[param] = np.random.uniform(low, high)
     return params_dict
 
-
-# TODO: remove this?
-# def generate_config(prior_low: np.array, 
-#                     prior_high: np.array, 
-#                     params_names: "list[str]", 
-#                     N_config: int = 1,
-#                     outdir: str = "./outdir/"
-#                     ) -> str:
-#     """
-#     From a given prior range and parameter names, generate the config files.
-    
-#     Args:
-#         prior_low: lower bound of the prior range
-#         prior_high: upper bound of the prior range
-#         params_names: list of parameter names
-#         N_config: identification number of this config file.
-    
-#     Returns:
-#         outdir (str): the directory where the config files are saved
-#     """
-    
-#     # Generate parameters
-#     params_dict = generate_params_dict(prior_low, prior_high, params_names)
-        
-#     # Create new injection file
-#     output_path = f'{outdir}injection_{str(N_config)}/'
-#     if not os.path.exists(output_path):
-#         os.makedirs(output_path)
-#         print("Made injection directory: ", output_path)
-#     filename = output_path + f"config.json"
-    
-#     if not os.path.exists(output_path):
-#         os.makedirs(output_path)
-#         print("Made injection directory: ", output_path)
-#     else:
-#         print("Injection directory exists: ", output_path)
-
-#     # This injection dictionary will store all needed information for the injection
-#     seed = np.random.randint(low=0, high=10000)
-#     injection_dict = {
-#         'seed': seed,
-#         'f_sampling': 2 * 2048,
-#         'duration': 128,
-#         'post_trigger_duration': 2,
-#         'trigger_time': 1187008882.43,
-#         'fmin': 20,
-#         'fref': 20,
-#         'ifos': ['H1', 'L1', 'V1'],
-#         'outdir' : output_path
-#     }
-    
-#     # Combine these with the parameters
-#     injection_dict.update(params_dict)
-    
-#     # Save the injection file to the output directory as JSON
-#     with open(filename, 'w') as f:
-#         json.dump(injection_dict, f)
-    
-#     return injection_dict
-
 def get_N(outdir):
     """
     Check outdir, get the subdirectories and return the length of subdirectories list.
@@ -533,12 +473,13 @@ def get_parser(**kwargs):
         default="1",
         help="Number (or generically, a custom identifier) of this injection.",
     )
-    parser.add_argument(
-        "--waveform-approximant",
-        type=str,
-        default="TaylorF2",
-        help="Which waveform approximant to use. Recommended to use TaylorF2 for now, NRTidalv2 might still be a bit unstable.",
-    )
+    # TODO: unused for jim H0?
+    # parser.add_argument(
+    #     "--waveform-approximant",
+    #     type=str,
+    #     default="TaylorF2",
+    #     help="Which waveform approximant to use. Recommended to use TaylorF2 for now, NRTidalv2 might still be a bit unstable.",
+    # )
     parser.add_argument(
         "--use-relative-binning",
         type=bool,

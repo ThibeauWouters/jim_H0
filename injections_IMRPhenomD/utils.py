@@ -11,11 +11,8 @@ import jax
 from jaxtyping import Array, Float
 
 # from injection_recovery import NAMING
-
-# TODO: fix to get the lambdas?
-# NAMING = ['M_c', 'q', 's1_z', 's2_z', 'lambda_1', 'lambda_2', 'd_L', 't_c', 'phase_c', 'cos_iota', 'psi', 'ra', 'sin_dec']
 NAMING = ['M_c', 'q', 's1_z', 's2_z', 'd_L', 't_c', 'phase_c', 'cos_iota', 'psi', 'ra', 'sin_dec']
-
+labels = [r'$M_c/M_\odot$', r'$q$', r'$\chi_1$', r'$\chi_2$', r'$d_{\rm{L}}/{\rm Mpc}$', r'$t_c$', r'$\phi_c$', r'$\iota$', r'$\psi$', r'$\alpha$', r'$\delta$']
 
 default_corner_kwargs = dict(bins=40, 
                         smooth=1., 
@@ -48,8 +45,6 @@ matplotlib_params = {"axes.grid": True,
         "figure.titlesize": 16}
 
 plt.rcParams.update(matplotlib_params)
-
-labels = [r'$M_c/M_\odot$', r'$q$', r'$\chi_1$', r'$\chi_2$', r'$\Lambda$', r'$\delta\Lambda$', r'$d_{\rm{L}}/{\rm Mpc}$', r'$t_c$', r'$\phi_c$', r'$\iota$', r'$\psi$', r'$\alpha$', r'$\delta$']
 
 ############################################
 ### Injection recovery utility functions ###
@@ -348,7 +343,7 @@ def plot_log_prob(log_prob, label, name, outdir):
     plt.close()
 
     
-def plot_chains(chains, name, outdir, truths = None, labels = labels):
+def plot_chains(chains, name, outdir, truths = None, labels = labels, convert_params: bool = False):
     
     chains = np.array(chains)
     
@@ -357,11 +352,12 @@ def plot_chains(chains, name, outdir, truths = None, labels = labels):
         chains = chains.reshape(-1, len(NAMING))
     
     # Find index of cos iota and sin dec
-    cos_iota_index = labels.index(r'$\iota$')
-    sin_dec_index = labels.index(r'$\delta$')
-    # Convert cos iota and sin dec to cos and sin
-    chains[:,cos_iota_index] = np.arccos(chains[:,cos_iota_index])
-    chains[:,sin_dec_index] = np.arcsin(chains[:,sin_dec_index])
+    if convert_params:
+        cos_iota_index = labels.index(r'$\iota$')
+        sin_dec_index = labels.index(r'$\delta$')
+        # Convert cos iota and sin dec to cos and sin
+        chains[:,cos_iota_index] = np.arccos(chains[:,cos_iota_index])
+        chains[:,sin_dec_index] = np.arcsin(chains[:,sin_dec_index])
     chains = np.asarray(chains)
     fig = corner.corner(chains, labels = labels, truths = truths, hist_kwargs={'density': True}, **default_corner_kwargs)
     fig.savefig(f"{outdir}{name}.png", bbox_inches='tight')  
@@ -407,7 +403,7 @@ def plot_log_prob_from_file(outdir, which_list = ['training', 'production']):
         plot_log_prob(log_prob, f'log_prob_{which}', f'log_prob_{which}', outdir)
     
     
-def load_true_params_from_config(outdir):
+def load_true_params_from_config(outdir, convert_params: bool = False):
     
     config = outdir + 'config.json'
     # Load the config   
@@ -416,10 +412,11 @@ def load_true_params_from_config(outdir):
     true_params = np.array([config[key] for key in NAMING])
     
     # Convert cos_iota and sin_dec to iota and dec
-    cos_iota_index = NAMING.index('cos_iota')
-    sin_dec_index = NAMING.index('sin_dec')
-    true_params[cos_iota_index] = np.arccos(true_params[cos_iota_index])
-    true_params[sin_dec_index] = np.arcsin(true_params[sin_dec_index])
+    if convert_params:
+        cos_iota_index = NAMING.index('cos_iota')
+        sin_dec_index = NAMING.index('sin_dec')
+        true_params[cos_iota_index] = np.arccos(true_params[cos_iota_index])
+        true_params[sin_dec_index] = np.arcsin(true_params[sin_dec_index])
     
     return true_params
 
