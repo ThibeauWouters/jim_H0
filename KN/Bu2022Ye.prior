@@ -1,8 +1,12 @@
-KNtimeshift=0
-luminosity_distance = 44
+timeshift=0
+luminosity_distance = Uniform(name='luminosity_distance', minimum=100., maximum=800., latex_label='$d_L$')
 inclination_EM = Uniform(name='inclination_EM', minimum=0., maximum=np.pi/2., latex_label='$\\iota$')
 log10_mej_dyn  = Uniform(name='log10_mej_dyn', minimum=-3, maximum=-1.7, latex_label='$\\log_{10}M^{\\rm{dyn}}_{\\rm{ej}}$')
 vej_dyn = Uniform(name='vej_dyn', minimum=0.12, maximum=0.25, latex_label='$V^{\\rm{dyn}}_{\\rm{ej}}$')
 Yedyn = Uniform(name='Yedyn', minimum=0.15, maximum=0.3, latex_label='$Y_{\\rm{e}}$')
 log10_mej_wind = Uniform(name='log10_mej_wind', minimum=-2, maximum=-0.89, latex_label='$\\log_{10}M^{\\rm{wind}}_{\\rm{ej}}$')
 vej_wind = Uniform(name='vej_wind', minimum=0.03, maximum=0.15, latex_label='$V^{\\rm{wind}}_{\\rm{ej}}$')
+alpha = Gaussian(mu=0., sigma=4e-3, name='alpha',latex_label='$\\alpha$')
+ratio_zeta = Uniform(minimum=0.10, maximum=0.50, name='ratio_zeta',latex_label='$\\zeta$')
+ratio_epsilon = Uniform(minimum=0.00, maximum=1.0, name='ratio_epsilon',latex_label='$\\varepsilon$')
+cos_theta_jn = Uniform(name='cos_theta_jn', minimum=-1, maximum=1, boundary='reflective')
