@@ -1,13 +1,12 @@
 #!/bin/bash
 
-# This script runs NMMA on the LCs. Just in a small .sh script to make it a bit more organized.
+export MKL_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+export OMP_NUM_THREADS=1
 
-### For a single injection: define which injection to do here
-# INJECTION_NUM=0
-
-for INJECTION_NUM in {0..31}; do
+for INJECTION_NUM in {0..22}; do
     echo "========== Running injection $INJECTION_NUM =========="
-    lightcurve-analysis \
+    mpiexec -np 16 lightcurve-analysis \
         --model Bu2022Ye \
         --interpolation-type tensorflow \
         --outdir ./outdir/BNS/$INJECTION_NUM \
@@ -19,18 +18,17 @@ for INJECTION_NUM in {0..31}; do
         --error-budget 1 \
         --nlive 2048 \
         --Ebv-max 0 \
+        --generation-seed 42 \
         --injection ./outdir/injection_Bu2022Ye.json \
         --injection-num $INJECTION_NUM \
-        --injection-detection-limit 21.7,21.4,20.9 \
         --injection-outfile ./outdir/BNS/$INJECTION_NUM/lc.csv \
-        --generation-seed 42 \
-        --remove-nondetections \
         --filters ztfg,ztfr,ztfi \
-        --ztf-ToO 300  \
-        --ztf-uncertainties \
         --ztf-sampling \
         --ztf-ToO 300 \
         --local-only \
         --svd-path ./svdmodels \
-        --plot
+        --plot \
+        # --ztf-uncertainties \
+        # --remove-nondetections \
+        # --injection-detection-limit None \ # TODO: for testing, remove later!
 done

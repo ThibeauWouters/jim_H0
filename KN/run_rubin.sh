@@ -1,9 +1,8 @@
 #!/bin/bash
 
-# This script runs NMMA on the LCs. Just in a small .sh script to make it a bit more organized.
-
-# Define which injection to do here
-INJECTION_NUM=0
+export MKL_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+export OMP_NUM_THREADS=1
 
 lightcurve-analysis \
     --model Bu2022Ye \
