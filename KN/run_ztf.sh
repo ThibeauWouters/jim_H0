@@ -4,7 +4,7 @@ export MKL_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 export OMP_NUM_THREADS=1
 
-for INJECTION_NUM in {0..22}; do
+for INJECTION_NUM in {2..29}; do
     echo "========== Running injection $INJECTION_NUM =========="
     mpiexec -np 16 lightcurve-analysis \
         --model Bu2022Ye \

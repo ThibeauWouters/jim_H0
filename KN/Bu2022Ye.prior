@@ -1,5 +1,5 @@
 timeshift=0
-luminosity_distance = Uniform(name='luminosity_distance', minimum=100., maximum=800., latex_label='$d_L$')
+luminosity_distance = Uniform(name='luminosity_distance', minimum=0., maximum=800., latex_label='$d_L$')
 inclination_EM = Uniform(name='inclination_EM', minimum=0., maximum=np.pi/2., latex_label='$\\iota$')
 log10_mej_dyn  = Uniform(name='log10_mej_dyn', minimum=-3, maximum=-1.7, latex_label='$\\log_{10}M^{\\rm{dyn}}_{\\rm{ej}}$')
 vej_dyn = Uniform(name='vej_dyn', minimum=0.12, maximum=0.25, latex_label='$V^{\\rm{dyn}}_{\\rm{ej}}$')
