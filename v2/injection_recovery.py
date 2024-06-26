@@ -20,10 +20,11 @@ import jax
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp
 from jimgw.jim import Jim
-from jimgw.single_event.detector import H1, L1
+from jimgw.single_event.detector import H1, L1, V1
 from jimgw.single_event.likelihood import HeterodynedTransientLikelihoodFD, TransientLikelihoodFD
 from jimgw.single_event.waveform import RippleIMRPhenomD_NRTidalv2
 from jimgw.prior import Uniform, Composite, PowerLaw
+from jimgw.transforms import Transform, default_functions
 import utils # our plotting and postprocessing utilities script
 
 from ripple import Mc_eta_to_ms
@@ -31,15 +32,36 @@ from ripple import Mc_eta_to_ms
 import optax
 
 # Names of the parameters and their ranges for sampling parameters for the injection
-NAMING = ['M_c', 'q', 's1_z', 's2_z', 'lambda_1', 'lambda_2', 'd_L', 't_c', 'phase_c', 'cos_iota', 'psi', 'ra', 'sin_dec']
+NAMING = ['M_c', 'q', 's1_z', 's2_z', 'lambda_1', 'lambda_2', 'H_0', 'z', 't_c', 'phase_c', 'cos_iota', 'psi', 'ra', 'sin_dec']
+
+# TODO: change the prior for injections
+# PRIOR = {
+#         "M_c": [1.00662100315094, 2.44429349899292], # but we are going to override this with a more focused prior!
+#         "q": [0.125, 1.0], 
+#         "s1_z": [-0.05, 0.05], 
+#         "s2_z": [-0.05, 0.05], 
+#         "lambda_1": [0.0, 5000.0], 
+#         "lambda_2": [0.0, 5000.0], 
+#         # "d_L": [30.0, 2000.0], 
+#         "H_0": [60.0, 80.0], 
+#         "z": [0.009783 - 0.000023, 0.009783 + 0.000023], 
+#         "t_c": [-0.1, 0.1], 
+#         "phase_c": [0.0, 2 * jnp.pi], 
+#         "cos_iota": [-1.0, 1.0], 
+#         "psi": [0.0, jnp.pi], 
+#         "ra": [0.0, 2 * jnp.pi], 
+#         "sin_dec": [-1, 1]
+# }
+
 PRIOR = {
-        "M_c": [1.00662100315094, 2.44429349899292], # but we are going to override this with a more focused prior!
+        "M_c": [1.187, 2.07], # but we are going to override this with a more focused prior!
         "q": [0.125, 1.0], 
         "s1_z": [-0.05, 0.05], 
         "s2_z": [-0.05, 0.05], 
         "lambda_1": [0.0, 5000.0], 
         "lambda_2": [0.0, 5000.0], 
-        "d_L": [30.0, 2000.0], 
+        "H_0": [60.0, 80.0], 
+        "z": [0.009783 - 0.000023, 0.009783 + 0.000023], 
         "t_c": [-0.1, 0.1], 
         "phase_c": [0.0, 2 * jnp.pi], 
         "cos_iota": [-1.0, 1.0], 
@@ -181,26 +203,40 @@ def body(args):
     epoch = config["duration"] - config["post_trigger_duration"]
     gmst = Time(config["trigger_time"], format='gps').sidereal_time('apparent', 'greenwich').rad
     # Array of injection parameters
-    true_param = {
-        'M_c':       config["M_c"],       # chirp mass
-        'eta':       eta,                 # symmetric mass ratio 0 < eta <= 0.25
-        's1_z':      config["s1_z"],      # aligned spin of priminary component s1_z.
-        's2_z':      config["s2_z"],      # aligned spin of secondary component s2_z.
-        'lambda_1':  config["lambda_1"],  # tidal deformability of priminary component lambda_1.
-        'lambda_2':  config["lambda_2"],  # tidal deformability of secondary component lambda_2.
-        'd_L':       config["d_L"],       # luminosity distance
-        't_c':       config["t_c"],       # timeshift w.r.t. trigger time
-        'phase_c':   config["phase_c"],   # merging phase
-        'iota':      iota,                # inclination angle
-        'psi':       config["psi"],       # polarization angle
-        'ra':        config["ra"],        # right ascension
-        'dec':       dec                  # declination
-        }
+    # true_param = {
+    #     'M_c':       config["M_c"],       # chirp mass
+    #     'eta':       eta,                 # symmetric mass ratio 0 < eta <= 0.25
+    #     's1_z':      config["s1_z"],      # aligned spin of priminary component s1_z.
+    #     's2_z':      config["s2_z"],      # aligned spin of secondary component s2_z.
+    #     'lambda_1':  config["lambda_1"],  # tidal deformability of priminary component lambda_1.
+    #     'lambda_2':  config["lambda_2"],  # tidal deformability of secondary component lambda_2.
+    #     # 'd_L':       config["d_L"],       # luminosity distance
+    #     'H_0':       config["H_0"],       # Hubble constant
+    #     'z':         config["z"],         # redshift
+    #     't_c':       config["t_c"],       # timeshift w.r.t. trigger time
+    #     'phase_c':   config["phase_c"],   # merging phase
+    #     'iota':      iota,                # inclination angle
+    #     'psi':       config["psi"],       # polarization angle
+    #     'ra':        config["ra"],        # right ascension
+    #     'dec':       dec                  # declination
+    #     }
+    
+    # TODO: perhaps best to move around?
+    # Create the transforms:
+    transforms_list = [default_functions["q_to_eta"],
+                       default_functions["cos_iota_to_iota"],
+                       default_functions["sin_dec_to_dec"],
+                       default_functions["H0_z_to_dL"]]
+    
+    transform = Transform(transforms_list, ["M_c", "s1_z", "s2_z", "lambda_1", "lambda_2", "t_c", "phase_c", "psi", "ra"])
+    
+    # Get true param and transformed as well.
+    true_param_original = {key: config[key] for key in naming}
+    true_param = transform.transform(true_param_original)
     
     # Get the true parameter values for the plots
-    truths = copy.deepcopy(true_param)
-    truths["eta"] = q
-    truths = np.fromiter(truths.values(), dtype=float)
+    # truths = copy.deepcopy(true_param_original)
+    truths = None # TODO: annoying to get actually...
     
     detector_param = {
         'ra':     config["ra"],
@@ -215,22 +251,29 @@ def body(args):
     # Generating the geocenter waveform
     h_sky = waveform(freqs, true_param)
     
-    # Setup interferometers
-    ifos_string_list = config["ifos"] # list of strings taken from config
-    ifos = [] # list of detector objects
-    for ifo_string in ifos_string_list:
-        print("Adding interferometer ", ifo_string)
-        eval(f'ifos.append({ifo_string})')
+    # TODO: add the interferometers again!
+    # # Setup interferometers
+    # ifos_string_list = config["ifos"] # list of strings taken from config
+    # ifos = [] # list of detector objects
+    # for ifo_string in ifos_string_list:
+    #     print("Adding interferometer ", ifo_string)
+    #     eval(f'ifos.append({ifo_string})')
         
+    psd_filename_list = ["./psds/AplusDesign_psd.txt", 
+                         "./psds/AplusDesign_psd.txt",
+                         "./psds/psd_virgo.txt"]
+    
+    ifos = [H1, L1, V1]
+    
     network_snr = 0
-    for ifo in ifos:
+    for ifo, psd_filename in zip(ifos, psd_filename_list):
         key, subkey = jax.random.split(key)
         ifo.inject_signal(
             subkey,
             freqs,
             h_sky,
             detector_param,
-            psd_file=args.psd_file,
+            psd_file=psd_filename,
         )
         network_snr += utils.compute_snr(ifo, h_sky, detector_param) ** 2
     print("Signal injected")
@@ -253,44 +296,19 @@ def body(args):
     else:
         print("INFO: Using regular (broad) chirp mass prior")
         Mc_prior       = Uniform(prior_low[0], prior_high[0], naming=['M_c'])
-    q_prior        = Uniform(prior_low[1], prior_high[1], naming=['q'],
-                            transforms={
-                                'q': (
-                                    'eta',
-                                    lambda params: params['q'] / (1 + params['q']) ** 2
-                                    )
-                                }
-                            )
+    q_prior        = Uniform(prior_low[1], prior_high[1], naming=['q'])
     s1z_prior      = Uniform(prior_low[2], prior_high[2], naming=['s1_z'])
     s2z_prior      = Uniform(prior_low[3], prior_high[3], naming=['s2_z'])
     lambda_1_prior = Uniform(prior_low[4], prior_high[4], naming=['lambda_1'])
     lambda_2_prior = Uniform(prior_low[5], prior_high[5], naming=['lambda_2'])
-    # dL_prior       = Uniform(prior_low[6], prior_high[6], naming=['d_L'])
-    dL_prior       = PowerLaw(prior_low[6], prior_high[6], alpha = 2.0, naming=['d_L'])
-    tc_prior       = Uniform(prior_low[7], prior_high[7], naming=['t_c'])
-    phic_prior     = Uniform(prior_low[8], prior_high[8], naming=['phase_c'])
-    cos_iota_prior = Uniform(prior_low[9], prior_high[9], naming=["cos_iota"],
-                            transforms={
-                                "cos_iota": (
-                                    "iota",
-                                    lambda params: jnp.arccos(
-                                        jnp.arcsin(jnp.sin(params["cos_iota"] / 2 * jnp.pi)) * 2 / jnp.pi
-                                    ),
-                                )
-                            },
-                            )
-    psi_prior      = Uniform(prior_low[10], prior_high[10], naming=["psi"])
-    ra_prior       = Uniform(prior_low[11], prior_high[11], naming=["ra"])
-    sin_dec_prior  = Uniform(prior_low[12], prior_high[12], naming=["sin_dec"],
-        transforms={
-            "sin_dec": (
-                "dec",
-                lambda params: jnp.arcsin(
-                    jnp.arcsin(jnp.sin(params["sin_dec"] / 2 * jnp.pi)) * 2 / jnp.pi
-                ),
-            )
-        },
-    )
+    H0_prior       = Uniform(prior_low[6], prior_high[6], naming=['H_0'])
+    z_prior        = Uniform(prior_low[7], prior_high[7], naming=['z'])
+    tc_prior       = Uniform(prior_low[8], prior_high[8], naming=['t_c'])
+    phic_prior     = Uniform(prior_low[9], prior_high[9], naming=['phase_c'])
+    cos_iota_prior = Uniform(prior_low[10], prior_high[10], naming=["cos_iota"])
+    psi_prior      = Uniform(prior_low[11], prior_high[11], naming=["psi"])
+    ra_prior       = Uniform(prior_low[12], prior_high[12], naming=["ra"])
+    sin_dec_prior  = Uniform(prior_low[13], prior_high[13], naming=["sin_dec"])
     
     # Compose the prior
     prior_list = [
@@ -300,7 +318,8 @@ def body(args):
             s2z_prior,
             lambda_1_prior,
             lambda_2_prior,
-            dL_prior,
+            H0_prior,
+            z_prior,
             tc_prior,
             phic_prior,
             cos_iota_prior,
@@ -308,10 +327,11 @@ def body(args):
             ra_prior,
             sin_dec_prior,
     ]
+    
     complete_prior = Composite(prior_list)
     bounds = jnp.array([[p.xmin, p.xmax] for p in complete_prior.priors])
     print("Finished prior setup")
-
+    
     print("Initializing likelihood")
     if args.relative_binning_ref_params_equal_true_params:
         ref_params = true_param
@@ -347,6 +367,7 @@ def body(args):
     jim = Jim(
         likelihood,
         complete_prior,
+        transform,
         **hyperparameters
     )
     

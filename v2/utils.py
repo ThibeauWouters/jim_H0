@@ -10,7 +10,7 @@ import corner
 import jax
 from jaxtyping import Array, Float
 
-NAMING = ['M_c', 'q', 's1_z', 's2_z', 'lambda_1', 'lambda_2', 'd_L', 't_c', 'phase_c', 'cos_iota', 'psi', 'ra', 'sin_dec']
+NAMING = ['M_c', 'q', 's1_z', 's2_z', 'lambda_1', 'lambda_2', 'H_0', 'z', 't_c', 'phase_c', 'cos_iota', 'psi', 'ra', 'sin_dec']
 
 default_corner_kwargs = dict(bins=40, 
                         smooth=1., 
@@ -44,7 +44,7 @@ matplotlib_params = {"axes.grid": True,
 
 plt.rcParams.update(matplotlib_params)
 
-labels = [r'$M_c/M_\odot$', r'$q$', r'$\chi_1$', r'$\chi_2$', r'$\Lambda_1$', r'$\Lambda_2$', r'$d_{\rm{L}}/{\rm Mpc}$', r'$t_c$', r'$\phi_c$', r'$\iota$', r'$\psi$', r'$\alpha$', r'$\delta$']
+labels = [r'$M_c/M_\odot$', r'$q$', r'$\chi_1$', r'$\chi_2$', r'$\Lambda_1$', r'$\Lambda_2$', r'$H_0$', r'$z$', r'$t_c$', r'$\phi_c$', r'$\iota$', r'$\psi$', r'$\alpha$', r'$\delta$']
 
 
 #################################
