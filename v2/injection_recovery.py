@@ -23,7 +23,7 @@ from jimgw.jim import Jim
 from jimgw.single_event.detector import H1, L1, V1
 from jimgw.single_event.likelihood import HeterodynedTransientLikelihoodFD, TransientLikelihoodFD
 from jimgw.single_event.waveform import RippleIMRPhenomD_NRTidalv2
-from jimgw.prior import Uniform, Composite, PowerLaw
+from jimgw.prior import Uniform, Composite, PowerLaw, Normal
 from jimgw.transforms import Transform, default_functions
 import utils # our plotting and postprocessing utilities script
 
@@ -62,7 +62,7 @@ PRIOR = {
         "lambda_2": [0.0, 5000.0], 
         "H_0": [40.0, 100.0], 
         # "z": [0.009783 - 0.000023, 0.009783 + 0.000023], 
-        "z": [0.009783 - 0.0001, 0.009783 + 0.0001], 
+        "z": [0.009783 - 0.0001, 0.009783 + 0.0001], # but will be skipped in favour fo 
         "t_c": [-0.1, 0.1], 
         "phase_c": [0.0, 2 * jnp.pi], 
         "cos_iota": [-1.0, 1.0], 
@@ -157,6 +157,7 @@ def body(args):
     prior_ranges = jnp.array([PRIOR[name] for name in naming])
     prior_low, prior_high = prior_ranges[:, 0], prior_ranges[:, 1]
     bounds = np.array(list(PRIOR.values()))
+    bounds = None # TODO: disabled bounds for now, remove if we want to analyze real events!!!!
     
     # Reading parameters
     config_path = f"{outdir}config.json"
@@ -303,7 +304,8 @@ def body(args):
     lambda_1_prior = Uniform(prior_low[4], prior_high[4], naming=['lambda_1'])
     lambda_2_prior = Uniform(prior_low[5], prior_high[5], naming=['lambda_2'])
     H0_prior       = Uniform(prior_low[6], prior_high[6], naming=['H_0'])
-    z_prior        = Uniform(prior_low[7], prior_high[7], naming=['z'])
+    # z_prior        = Uniform(prior_low[7], prior_high[7], naming=['z'])
+    z_prior        = Normal(0.009783, 0.000023, naming=['z'])
     tc_prior       = Uniform(prior_low[8], prior_high[8], naming=['t_c'])
     phic_prior     = Uniform(prior_low[9], prior_high[9], naming=['phase_c'])
     cos_iota_prior = Uniform(prior_low[10], prior_high[10], naming=["cos_iota"])
@@ -330,7 +332,8 @@ def body(args):
     ]
     
     complete_prior = Composite(prior_list)
-    bounds = jnp.array([[p.xmin, p.xmax] for p in complete_prior.priors])
+    bounds = None # TODO: disabled bounds for now, remove if we want to analyze real events!!!!
+    # bounds = jnp.array([[p.xmin, p.xmax] for p in complete_prior.priors])
     print("Finished prior setup")
     
     print("Initializing likelihood")
@@ -360,7 +363,11 @@ def body(args):
     # Generate arguments for the local samplercd
     mass_matrix = jnp.eye(len(prior_list))
     for idx, prior in enumerate(prior_list):
-        mass_matrix = mass_matrix.at[idx, idx].set(prior.xmax - prior.xmin) # fetch the prior range
+        try:
+            mass_matrix = mass_matrix.at[idx, idx].set(prior.xmax - prior.xmin) # fetch the prior range
+        except Exception as e:
+            print("There was an exception:", e)
+            mass_matrix = mass_matrix.at[idx, idx].set(0.001) # fetch the prior range
     local_sampler_arg = {'step_size': mass_matrix * args.eps_mass_matrix} # set the overall step size
     hyperparameters["local_sampler_arg"] = local_sampler_arg
     
