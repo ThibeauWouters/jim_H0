@@ -60,7 +60,7 @@ PRIOR = {
         "s2_z": [-0.05, 0.05], 
         "lambda_1": [0.0, 5000.0], 
         "lambda_2": [0.0, 5000.0], 
-        "H_0": [z], 
+        "H_0": [40.0, 80.0], 
         # "z": [0.009783 - 0.000023, 0.009783 + 0.000023], 
         "z": [0.009783 - 0.0001, 0.009783 + 0.0001], # but will be skipped in favour fo 
         "t_c": [-0.1, 0.1], 
@@ -304,7 +304,6 @@ def body(args):
     lambda_1_prior = Uniform(prior_low[4], prior_high[4], naming=['lambda_1'])
     lambda_2_prior = Uniform(prior_low[5], prior_high[5], naming=['lambda_2'])
     H0_prior       = Uniform(prior_low[6], prior_high[6], naming=['H_0'])
-    # z_prior        = Uniform(prior_low[7], prior_high[7], naming=['z'])
     z_prior        = Normal(0.009783, 0.000023, naming=['z'])
     tc_prior       = Uniform(prior_low[8], prior_high[8], naming=['t_c'])
     phic_prior     = Uniform(prior_low[9], prior_high[9], naming=['phase_c'])
