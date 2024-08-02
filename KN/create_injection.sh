@@ -8,7 +8,7 @@ nmma-create-injection \
     --eos-file ../injections_tidal/36022_macroscopic.dat \
     --binary-type BNS \
     --extension json \
-    -f ./outdir/injection_Bu2022Ye \
+    -f ./injection_Bu2022Ye \
     --generation-seed 42 \
     --aligned-spin \
     --eject
