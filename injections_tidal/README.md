@@ -1,3 +1,5 @@
+The new results are in `outdir`, which had the powerlaw prior. A new set of runs with uniform prior will be saved to `outdir_uniform`.
+
 The likeliest EOS from the Hauke et al review paper is taken from the Potsdam machines at `/home/aya/work/hkoehn/EOS_analysis/likeliest_eos/36022_macroscopic.dat` 
 
 Note:
