@@ -4,7 +4,7 @@ export MKL_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 export OMP_NUM_THREADS=1
 
-for INJECTION_NUM in {0..20}; do
+for INJECTION_NUM in {0..21}; do
     OUTDIR=./outdir_Rubin/$INJECTION_NUM
     
     echo "========== Running injection $INJECTION_NUM =========="

@@ -42,10 +42,19 @@ def make_corner_plot(samples: np.array,
 
 def main():
     # Load samples
-    for id in [0, 1, 2, 3, 4]:
-        print(f"Making cornerplot for id = {id}")
-        samples = load_samples(id, which_run="Rubin")
-        make_corner_plot(samples, id)
+    N = 20
+    for id in range(0, N+1):
+        print(f"=== Making cornerplot for id = {id}")
+        success_counter = 0
+
+        try: 
+            samples = load_samples(id, which_run="Rubin")
+            make_corner_plot(samples, id)
+            success_counter += 1
+        except Exception as e:
+            print(f"Issue: {e} -- failed run?")
+    
+    print(f"Percentage of successful runs: {success_counter/(N+1)*100:.2f}%")
     
     return
 
