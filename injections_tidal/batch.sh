@@ -2,7 +2,7 @@
 
 # Perform the batch of GW run, i.e., loop over outdir and do the injection for each N
 
-outdir="./outdir"
+outdir="./outdir_uniform"
 
 # Loop over each subdirectory in the output directory
 for dir in "$outdir"/injection_*; do
