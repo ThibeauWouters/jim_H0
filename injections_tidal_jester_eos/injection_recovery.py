@@ -5,7 +5,7 @@ import psutil
 p = psutil.Process()
 p.cpu_affinity([0])
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+os.environ['CUDA_VISIBLE_DEVICES'] = "3"
 os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = "0.15"
 import numpy as np
 # Regular imports 
@@ -265,9 +265,9 @@ def body(args):
     s2z_prior      = Uniform(prior_low[3], prior_high[3], naming=['s2_z'])
     lambda_1_prior = Uniform(prior_low[4], prior_high[4], naming=['lambda_1'])
     lambda_2_prior = Uniform(prior_low[5], prior_high[5], naming=['lambda_2'])
-    dL_prior       = Uniform(prior_low[6], prior_high[6], naming=['d_L'])
+    # dL_prior       = Uniform(prior_low[6], prior_high[6], naming=['d_L'])
     dL_prior       = PowerLaw(prior_low[6], prior_high[6], alpha = 2.0, naming=['d_L'])
-    # tc_prior       = Uniform(prior_low[7], prior_high[7], naming=['t_c'])
+    tc_prior       = Uniform(prior_low[7], prior_high[7], naming=['t_c'])
     phic_prior     = Uniform(prior_low[8], prior_high[8], naming=['phase_c'])
     cos_iota_prior = Uniform(prior_low[9], prior_high[9], naming=["cos_iota"],
                             transforms={

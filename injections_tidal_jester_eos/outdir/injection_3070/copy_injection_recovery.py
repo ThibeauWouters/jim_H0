@@ -5,7 +5,7 @@ import psutil
 p = psutil.Process()
 p.cpu_affinity([0])
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+os.environ['CUDA_VISIBLE_DEVICES'] = "3"
 os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = "0.15"
 import numpy as np
 # Regular imports 
@@ -39,7 +39,7 @@ PRIOR = {
         "s2_z": [-0.5, 0.5], 
         "lambda_1": [0.0, 5000.0], 
         "lambda_2": [0.0, 5000.0], 
-        "d_L": [20.0, 350.0],
+        "d_L": [20.0, 400.0],
         "t_c": [-0.1, 0.1], 
         "phase_c": [0.0, 2 * jnp.pi], 
         "cos_iota": [-1.0, 1.0], 

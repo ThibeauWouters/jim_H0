@@ -64,11 +64,13 @@ def get_lambda(mass: float,
     """
     
     if which.lower() == "hauke":
+        print("Loading the EOS for injection from Hauke")
         likeliest_eos = "./36022_macroscopic.dat"
         likeliest_eos_data = np.loadtxt(likeliest_eos)
         likeliest_mass, likeliest_lambda = likeliest_eos_data[:, 1], likeliest_eos_data[:, 2]
         
     else:
+        print("Loading the EOS for injection from jester")
         data = np.load("target_eos.npz")
         likeliest_mass, likeliest_lambda = data["masses_EOS"], data["Lambdas_EOS"]
     
